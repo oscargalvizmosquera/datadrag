@@ -41,11 +41,8 @@
    	 	'html'             => '<div id="cont-tabla"><table id="tabla-registros">'  '[HTML] = Registros con que se detectaron en formtato de tabla html con atributos id para darle estilo Css'
 
    	 );
- 
-
-
- //Ejemplo 
-
+***********************************************************/
+   
    $arrayResultadoEvaluacion=json_decode($estadoArchivo);
 
    if($arrayResultadoEvaluacion->estado){
@@ -64,67 +61,13 @@
    	  echo "<h2>Html</h2>";
    	  echo $arrayResultadoEvaluacion->html;	
    }
-***********************************************************/
 
-   //Registrar datos 
-  // $arrayRegusltadoRegistro=$ObjDrag->registrar($ObjDrag,'prueba.txt');
 
-/***********************************************************
-           Formato de retorno de la funcion registrar
-************************************************************
 
-   	 $arrayRespuesta=array(
-   	 	'estado'           => 0,                                                   *
-   	 	'mensajes'         => '',                                                  *
-   	 	'validos'          => 0,                                                   *   
-   	 	'errores'          => array(                                               *  
-   	 		                    'cantidad' => 0,                                   *   Los mismos resultados que en el formato veificar archivo
-   	 		                    'lineas'   => ''                                   *
-   	 		                  ),                                                   *
-   	 	'info_archivo'     => array(),                                             *
-   	 	'html'             => '<div id="cont-tabla"><table id="tabla-registros">'  *
-   	 	'registros'       => 0  '[entero] = Cantidad de registros existosos',                         
-   	 	'no_registros'    => 0  '[entero] = Cantidad de registros no exitosos', 
-   	 	'para_actualizar' => 0  '[entero] = Cantidad de registros encontrados osea para actualizar',
-   	    
-   	 );
-     
-     //Estos datos no se retornan se pueden editar para cambiar el valor de estado pueden ser iconos bootstrap.... 
-   	 $estados=array(
-   	 	'registrado'   => 'registrado',
-   	 	'editado'      => 'actualizado',
-   	 	'eliminado'    => 'eliminado',
-   	 	'encontrado'   => 'Ya registrado',
-   	 	'error'        => ''
-   	 );
 
-*************************************************************/
 
-/*
-   $arrayRegusltadoRegistro=json_decode($arrayRegusltadoRegistro);
-  // var_dump($arrayRegusltadoRegistro);
-  
-  if($arrayRegusltadoRegistro->estado){
 
-?>
-             <p>Registrados <?php  echo $arrayRegusltadoRegistro->registros; ?><br>
-                 Encontrados <?php  echo $arrayRegusltadoRegistro->para_actualizar; ?></br>
-                 Erorres de registro <?php  echo $arrayRegusltadoRegistro->no_registros; ?>
-             </p>
-             <div>
-             	<?php echo $arrayRegusltadoRegistro->html; ?>
-             </div>
 
-<?php
-  }
-  else{
-  	echo "Se dectectaron algunos errores";
-  }
-  
-*/
-
-   //Registrar datos 
-   $arrayRegusltadoRegistro=$ObjDrag->actualizar($ObjDrag,'prueba.txt');
 
   //Obtener un array del archivo
  // var_dump($ObjDrag->archivo);
