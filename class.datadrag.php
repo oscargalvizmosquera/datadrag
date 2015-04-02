@@ -54,7 +54,7 @@ class DataDrag extends ControlError {
 		
 		} catch (PDOException $e) {
 		
-			echo 'Error tratando en funcion Exec de clase DataDrag';
+			echo '<p>Error tratando en funcion Exec de clase DataDrag</p>'. $e->getMessage();
 		
 		}
 		
@@ -170,8 +170,17 @@ class DataDrag extends ControlError {
    	  	if($respuesta){
 
 	   	      $numColumnas=ControlError::existenColumnas($respuesta);
+	   	      $id=0;
+
+	   	      if(defined('__ACTUALIZAR__')){
+	   	      	echo 'Actualizar '.__ACTUALIZAR__;
+	   	      	$id=1;
+	   	      }
+	   	      else{
+	   	      	$id=__ID__;
+	   	      }
 	   	      
-	   	      if(!__ID__){
+	   	      if(!$id){
 	   	
 				$numColumnas-=1;
 
@@ -310,6 +319,354 @@ class DataDrag extends ControlError {
 	  }
 
    }
+
+   public function registrar($ObjDrag,$archivo){
+   	 $arrayRespuesta=array(
+   	 	'estado'           => 0,
+   	 	'mensajes'         => '',
+   	 	'validos'          => 0,
+   	 	'errores'          => array(
+   	 		                    'cantidad' => 0,
+   	 		                    'lineas'   => ''
+   	 		                  ),
+   	 	'info_archivo'     => array(),
+   	 	'registros'       => 0,
+   	 	'no_registros'    => 0,
+   	 	'para_actualizar' => 0,
+   	 	'html'             => '<div id="cont-tabla"><table id="tabla-registros">'
+
+   	 );
+
+   	 $estados=array(
+   	 	'registrado'   => 'registrado',
+   	 	'editado'      => 'actualizado',
+   	 	'eliminado'    => 'eliminado',
+   	 	'encontrado'   => 'Ya registrado',
+   	 	'error'        => ''
+   	 );
+
+     $campos=$ObjDrag->getCamposTabla($ObjDrag);
+
+     $campos=json_decode($campos); 
+
+      $arrayRespuesta['html'].='<tr class="encabezado-tabla">';
+      $arrayRespuesta['html'].='<th>Estado</th>';
+
+	     foreach ($campos as $key => $value) {
+	  
+	     	$arrayRespuesta['html'].='<th>'.$value.'</th>';
+	  
+	     }
+	  
+	  $arrayRespuesta['html'].='</tr>';
+
+	  try {
+
+	  	$archivo = ControlError::recibirArchivo($archivo);
+
+	  	$this->archivo=$archivo;
+
+	  	$arrayRespuesta['info_archivo']['num_filas']=count($archivo);
+
+	   	$consulta = "select * from " . $this->tabla;
+
+	   	$respuesta = $ObjDrag -> Query($consulta);
+
+	   	$numColumnas=ControlError::existenColumnas($respuesta);
+        
+        $htmlAuto='';
+
+        if(!__ID__){
+
+        	$numColumnas-=1;
+
+        }
+
+  		    $camposTabla=$ObjDrag -> getCamposTabla( $ObjDrag , $nombreTabla=0 );
+
+  		    $arrayCampos=json_decode($camposTabla);
+
+  		    $camposTabla=str_replace( array( '"' , ']' , '[' , ')' , '(' ), '' , $camposTabla );
+
+  		foreach ($archivo as $linea => $registro) {
+
+  			$arrayRegistro=explode('	',$registro);
+
+  			if( count( $arrayRegistro ) == $numColumnas ){
+
+  				$arrayRespuesta['validos']++;
+
+  				$values='';
+
+  				$condicion='';
+
+  				$i=0;
+
+  				$item='';
+
+  				$arrayRespuesta['html'].='<tr>'.$htmlAuto;
+
+  				foreach ($arrayRegistro as $key => $value) {
+
+  					$condicion.=$arrayCampos[$i]."='".trim($value)."' and ";
+
+                    $values.="'".trim($value)."',";
+
+  					$item.='<td>'.$value.'</td>';
+
+  					$i++;
+  				}
+
+  				//Acomodando cadena para insert
+  				$ln=strlen($values);
+
+  				$values=substr($values,0,$ln-1);
+
+  				//Acomodando cadena para select
+  				$ln=strlen($condicion);
+
+  				$condicion=substr($condicion,0,$ln-5);
+
+  				//Seleccionar
+  				$consulta="select ".$camposTabla." from ".$this->tabla." where ".$condicion;
+
+  				if(!$ObjDrag->Query($consulta)->rowCount()){
+
+                    //Insertando datos
+  					$consulta="insert into ".$this->tabla." (".$camposTabla.") values (".$values.")";
+
+	  				if($ObjDrag->Exec($consulta)){
+                
+                         $arrayRespuesta['html'] .= "<td>".$estados['registrado']."</td>".$item;
+
+                         $arrayRespuesta['registros']++;
+
+	  				}
+	  				else{
+
+	  					$arrayRespuesta['html'] .= "<td>".$estados['error']."</td>".$item;
+
+	  					$arrayRespuesta['no_registros']++;
+
+	  				}
+	  			}
+	  			else{
+	  				
+	  				$arrayRespuesta['html'] .= "<td>".$estados['encontrado']."</td>".$item;
+
+                    $arrayRespuesta['para_actualizar']++;
+
+	  			}
+
+  				$arrayRespuesta['html'].='</tr>';
+  			}
+  			else{
+
+  				$arrayRespuesta['errores']['cantidad']++;
+
+  				$arrayRespuesta['errores']['lineas'].='L:'.($linea+1).', ';
+
+  			}
+		   
+		   //var_dump($arrayRegistro);
+		   
+  		}
+
+  		$arrayRespuesta['html'].='</table></div>';
+
+  		if(!$arrayRespuesta['errores']['cantidad']){
+  		
+  			$arrayRespuesta['estado']=1;
+  		
+  		}
+
+  		return json_encode($arrayRespuesta);
+
+	  } catch (Exception $e) {
+	  
+	    echo $e->getMessage();	
+	  
+	  }
+
+   }
+   public function actualizar($ObjDrag,$archivo){
+       define('__ACTUALIZAR__',1);
+
+
+   	 $arrayRespuesta=array(
+   	 	'estado'           => 0,
+   	 	'mensajes'         => '',
+   	 	'validos'          => 0,
+   	 	'errores'          => array(
+   	 		                    'cantidad' => 0,
+   	 		                    'lineas'   => ''
+   	 		                  ),
+   	 	'info_archivo'     => array(),
+   	 	'registros'       => 0,
+   	 	'no_registros'    => 0,
+   	 	'para_actualizar' => 0,
+   	 	'html'             => '<div id="cont-tabla"><table id="tabla-registros">'
+
+   	 );
+
+   	 $estados=array(
+   	 	'registrado'   => 'registrado',
+   	 	'editado'      => 'actualizado',
+   	 	'eliminado'    => 'eliminado',
+   	 	'encontrado'   => 'Ya registrado',
+   	 	'error'        => ''
+   	 );
+
+     $campos=$ObjDrag->getCamposTabla($ObjDrag);
+
+     $campos=json_decode($campos); 
+
+      $arrayRespuesta['html'].='<tr class="encabezado-tabla">';
+      $arrayRespuesta['html'].='<th>Estado</th>';
+
+	     foreach ($campos as $key => $value) {
+	  
+	     	$arrayRespuesta['html'].='<th>'.$value.'</th>';
+	  
+	     }
+	  
+	  $arrayRespuesta['html'].='</tr>';
+
+	  try {
+
+	  	$archivo = ControlError::recibirArchivo($archivo);
+
+	  	$this->archivo=$archivo;
+
+	  	$arrayRespuesta['info_archivo']['num_filas']=count($archivo);
+
+	   	$consulta = "select * from " . $this->tabla;
+
+	   	$respuesta = $ObjDrag -> Query($consulta);
+
+	   	$numColumnas=ControlError::existenColumnas($respuesta);
+        
+        $htmlAuto='';
+
+  		    $camposTabla=$ObjDrag -> getCamposTabla( $ObjDrag , $nombreTabla=0 );
+
+  		    $arrayCampos=json_decode($camposTabla);
+
+  		    $camposTabla=str_replace( array( '"' , ']' , '[' , ')' , '(' ), '' , $camposTabla );
+
+  		foreach ($archivo as $linea => $registro) {
+
+  			$arrayRegistro=explode('	',$registro);
+
+  			if( count( $arrayRegistro ) != $numColumnas ){
+
+  				$arrayRespuesta['validos']++;
+
+  				$values='';
+
+  				$condicion='';
+
+  				$i=1;
+
+  				$item='';
+
+  				$arrayRespuesta['html'].='<tr>'.$htmlAuto;
+
+  				foreach ($arrayRegistro as $key => $value) {
+
+  					$condicion.=$arrayCampos[$i]."='".trim($value)."' and ";
+
+                    $values.="'".trim($value)."',";
+
+  					$item.='<td>'.$value.'</td>';
+
+  					$i++;
+  				}
+  			almkjdnvfjk
+
+  				//Acomodando cadena para insert
+  				$ln=strlen($values);
+
+  				$values=substr($values,0,$ln-1);
+
+  				//Acomodando cadena para select
+  				$ln=strlen($condicion);
+
+  				$condicion=substr($condicion,0,$ln-5);
+
+  				//Seleccionar
+  				$consulta="select ".$camposTabla." from ".$this->tabla." where ".$condicion;
+
+  				echo "<p>".$consulta."</p>";
+
+  				$respuestaQ=$ObjDrag->Query($consulta);
+
+  				if(!$respuestaQ->rowCount()){
+
+                    //Insertando datos
+                    /*
+  					$consulta="insert into ".$this->tabla." (".$camposTabla.") values (".$values.")";
+
+	  				if($ObjDrag->Exec($consulta)){
+                
+                         $arrayRespuesta['html'] .= "<td>".$estados['registrado']."</td>".$item;
+
+                         $arrayRespuesta['registros']++;
+
+	  				}
+	  				else{
+
+	  					$arrayRespuesta['html'] .= "<td>".$estados['error']."</td>".$item;
+
+	  					$arrayRespuesta['no_registros']++;
+
+	  				}*/
+	  			}
+	  			else{
+                    
+                    $datos=$respuestaQ->fetch();
+
+                    $item="<td>".$datos[$arrayCampos[0]]."</td>".$item;
+	  				
+	  				$arrayRespuesta['html'] .= "<td>".$estados['encontrado']."</td>".$item;
+
+                    $arrayRespuesta['para_actualizar']++;
+
+	  			}
+
+  				$arrayRespuesta['html'].='</tr>';
+  			}
+  			else{
+
+  				$arrayRespuesta['errores']['cantidad']++;
+
+  				$arrayRespuesta['errores']['lineas'].='L:'.($linea+1).', ';
+
+  			}
+		 
+		   //var_dump($arrayRegistro);
+		   
+  		}
+
+  		$arrayRespuesta['html'].='</table></div>';
+
+  		echo $arrayRespuesta['html'];
+
+  		if(!$arrayRespuesta['errores']['cantidad']){
+  		
+  			$arrayRespuesta['estado']=1;
+  		
+  		}
+
+  		//return json_encode($arrayRespuesta);
+
+	  } catch (Exception $e) {
+	  
+	    echo $e->getMessage();	
+	  
+	  }
+   }
+
 
 }
 
