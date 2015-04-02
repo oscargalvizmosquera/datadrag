@@ -1,3 +1,4 @@
+
 <?php 
 
   include_once 'config.php';
@@ -69,7 +70,7 @@
 
 
 
-  //Obtener un array del archivo
+  //Obtener un array del archivon
  // var_dump($ObjDrag->archivo);
 
   
